@@ -3,11 +3,16 @@ package com.example.lab_1_2_keerthi_pavan_c0826625;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.text.Editable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,8 +21,9 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     DBhelper db;
-    TextView proId, proPrice, proName, proDesc;
-    Button btnPrevious, btnNext;
+    TextView tv;
+    EditText proId, proPrice, proName, proDesc;
+    Button btnPrevious, btnNext, btnUpdate, btnDelete, btnAddTask;
     List<Products> mProducts = new ArrayList<>();
 
     int productDisplaying = 10;
@@ -26,17 +32,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        proId =  findViewById(R.id.pid);
+        proId = findViewById(R.id.pid);
         proPrice = findViewById(R.id.price);
         proName = findViewById(R.id.name);
         proDesc = findViewById(R.id.desc);
         btnNext = findViewById(R.id.next);
         btnPrevious = findViewById(R.id.previous);
+        btnUpdate = findViewById(R.id.update);
+        btnDelete = findViewById(R.id.delete);
+        btnAddTask = findViewById(R.id.addProduct);
+        tv = findViewById(R.id.textview);
 
         db = new DBhelper(this);
         data();
-
     }
+
 
     public void data(){
 
@@ -78,6 +88,10 @@ public class MainActivity extends AppCompatActivity {
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                proName.setEnabled(false);
+                proDesc.setEnabled(false);
+                proPrice.setEnabled(false);
+                btnUpdate.setText("EDIT PRODUCT");
                 if(mProducts.size()>productDisplaying+1){
                     productDisplaying += 1;
                     proId.setText(String.valueOf(mProducts.get(productDisplaying).getId()));
@@ -95,6 +109,10 @@ public class MainActivity extends AppCompatActivity {
         btnPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                proName.setEnabled(false);
+                proDesc.setEnabled(false);
+                proPrice.setEnabled(false);
+                btnUpdate.setText("EDIT PRODUCT");
                 if(0 < productDisplaying){
                     productDisplaying -= 1;
                     proId.setText(String.valueOf(mProducts.get(productDisplaying).getId()));
@@ -110,6 +128,156 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btnUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                int a =  Integer.parseInt(btnUpdate.getTag().toString());
+                Log.d("myTag", String.valueOf(a) );
+                if(a == 0) {
+                    tv.setText("EDIT THIS PRODUCT");
+                    btnUpdate.setText("UPDATE PRODUCT");
+                    btnDelete.setVisibility(View.GONE);
+                    btnNext.setVisibility(View.GONE);
+                    btnPrevious.setVisibility(View.GONE);
+                    btnAddTask.setVisibility(View.GONE);
+                    proName.setEnabled(true);
+                    proDesc.setEnabled(true);
+                    proPrice.setEnabled(true);
+                    Toast.makeText(MainActivity.this, "Update Product details and press Update.", Toast.LENGTH_SHORT).show();
+                    btnUpdate.setTag(1);
+                }
+                else{
+                    String idTXT = proId.getText().toString();
+                    String nameTXT = proName.getText().toString();
+                    String descTXT = proDesc.getText().toString();
+                    String priceTXT = proPrice.getText().toString();
+                    boolean result = db.updatedata(idTXT, nameTXT, descTXT, priceTXT);
+
+                    if(result){
+                        Log.d("Database","Updated");
+                        Toast.makeText(MainActivity.this, "Product Details Updated Successfully", Toast.LENGTH_SHORT).show();
+                        btnUpdate.setTag(0);
+                        tv.setText("PRODUCTS");
+                        btnUpdate.setText("EDIT Product");
+                        proName.setEnabled(false);
+                        proDesc.setEnabled(false);
+                        proPrice.setEnabled(false);
+                        btnDelete.setVisibility(View.VISIBLE);
+                        btnNext.setVisibility(View.VISIBLE);
+                        btnPrevious.setVisibility(View.VISIBLE);
+                        btnAddTask.setVisibility(View.VISIBLE);
+
+
+                    }
+                }
+            }
+        });
+
+        btnDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String idTXT = proId.getText().toString();
+                Boolean checkdeletedata = db.deletedata(idTXT);
+
+                if(checkdeletedata){
+                    int i = 0;
+                    for(Products p: mProducts){
+                        if(String.valueOf(p.getId()).equals(idTXT)){
+                            proName.setEnabled(false);
+                            proDesc.setEnabled(false);
+                            proPrice.setEnabled(false);
+                            btnUpdate.setText("EDIT PRODUCT");
+                            if(mProducts.size()>productDisplaying+1){
+                                productDisplaying += 1;
+                                proId.setText(String.valueOf(mProducts.get(productDisplaying).getId()));
+                                proName.setText(String.valueOf(mProducts.get(productDisplaying).getName()));
+                                proDesc.setText(String.valueOf(mProducts.get(productDisplaying).getDescription()));
+                                proPrice.setText(String.valueOf(mProducts.get(productDisplaying).getPrice()));
+                            }
+                            else{
+                                proName.setText("");
+                                proDesc.setText("");
+                                proPrice.setText("");
+                                proId.setText("");
+                                //Toast.makeText(MainActivity.this, "Last Product", Toast.LENGTH_SHORT).show();
+                            }
+                            mProducts.remove(i);
+
+                            break;
+
+                        }
+                        i++;
+                    }
+                    Toast.makeText(MainActivity.this, "Entry Deleted", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Toast.makeText(MainActivity.this, "Entry Not Deleted", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        });
+            btnAddTask.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+
+
+                int a =  Integer.parseInt(btnAddTask.getTag().toString());
+                Log.d("myTag", String.valueOf(a) );
+                if(a == 0) {
+                    tv.setText("Add New Product");
+                    btnUpdate.setVisibility(View.GONE);
+                    btnDelete.setVisibility(View.GONE);
+                    btnNext.setVisibility(View.GONE);
+                    btnPrevious.setVisibility(View.GONE);
+                    btnAddTask.setText("SAVE PRODUCT");
+                    proId.setText("");
+                    proName.setText("");
+                    proDesc.setText("");
+                    proPrice.setText("");
+                    proId.setEnabled(true);
+                    proName.setEnabled(true);
+                    proDesc.setEnabled(true);
+                    proPrice.setEnabled(true);
+                    Toast.makeText(MainActivity.this, "Add Product details and press Add.", Toast.LENGTH_SHORT).show();
+                    btnAddTask.setTag(1);
+                }else{
+                    Integer idTXT = Integer.valueOf(proId.getText().toString());
+                    String nameTXT = proName.getText().toString();
+                    String descTXT = proDesc.getText().toString();
+                    Integer priceTXT = Integer.valueOf(proPrice.getText().toString());
+                    if(idTXT != null && nameTXT != null && descTXT != null && priceTXT != null){
+                        boolean result = db.insertProductData(idTXT,nameTXT,descTXT,priceTXT,44,33);
+                        if(result){
+                            Toast.makeText(MainActivity.this, "Product Details Added Successfully", Toast.LENGTH_SHORT).show();
+                            btnAddTask.setTag(0);
+                            btnAddTask.setText("ADD NEW PRODUCT");
+                            proId.setEnabled(false);
+                            proName.setEnabled(false);
+                            proDesc.setEnabled(false);
+                            proPrice.setEnabled(false);
+                            btnDelete.setVisibility(View.VISIBLE);
+                            btnNext.setVisibility(View.VISIBLE);
+                            btnPrevious.setVisibility(View.VISIBLE);
+                            btnUpdate.setVisibility(View.VISIBLE);
+
+
+                        }
+
+                    }else{
+                        Toast.makeText(MainActivity.this, "Fill All Fields", Toast.LENGTH_SHORT).show();
+                    }
+
+
+                }
+
+
+                }
+
+            });
 
     }
+
+
 }

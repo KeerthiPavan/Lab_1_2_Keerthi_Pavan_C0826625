@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.Editable;
 
 import androidx.annotation.Nullable;
 
@@ -56,6 +57,42 @@ public class DBhelper extends SQLiteOpenHelper {
         SQLiteDatabase DB = this.getWritableDatabase();
         Cursor cursor = DB.rawQuery("Select * from PRODUCTS", null);
         return cursor;
+    }
+
+    public Boolean updatedata(String ID, String NAME, String DESCRIPTION, String PRICE)
+    {
+        SQLiteDatabase DB = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(PRO_NAME, NAME);
+        contentValues.put(PRO_DESCRIPTION, DESCRIPTION);
+        contentValues.put(PRO_PRICE, PRICE);
+        Cursor cursor = DB.rawQuery("Select * from PRODUCTS where ID = ?", new String[]{ID});
+        if (cursor.getCount() > 0) {
+            long result = DB.update("PRODUCTS", contentValues, "ID=?", new String[]{ID});
+            if (result == -1) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    public Boolean deletedata (String ID)
+    {
+        SQLiteDatabase DB = this.getWritableDatabase();
+        Cursor cursor = DB.rawQuery("Select * from PRODUCTS where ID = ?", new String[]{ID});
+        if (cursor.getCount() > 0) {
+            long result = DB.delete("PRODUCTS", "ID=?", new String[]{ID});
+            if (result == -1) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 
 
